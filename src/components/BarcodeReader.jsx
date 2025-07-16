@@ -34,7 +34,6 @@ function BarcodeReader() {
       (result, err) => {
         if (result) {
           setCodigo("Código lido: " + result.getText());
-          codeReaderRef.reset();
           setScanning(false);
           pararLeitura();
         }
@@ -47,10 +46,8 @@ function BarcodeReader() {
   };
 
   const pararLeitura = () => {
-    if (codeReaderRef.current) {
-      codeReaderRef.reset();
-      codeReaderRef.current = null;
-    }
+    codeReaderRef.current.reset();
+    codeReaderRef.current = null;
 
     setScanning(false);
   };
