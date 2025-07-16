@@ -26,7 +26,7 @@ function BarcodeReader() {
 
       codeReader.decodeFromVideoDevice(
         selectedDeviceId,
-        video,
+        'video',
         (result, err) => {
           if (result && scanning) {
             setCodigo(result.getText());
