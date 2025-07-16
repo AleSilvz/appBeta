@@ -3,38 +3,52 @@ import { useRef, useState } from "react";
 
 function BarcodeReader() {
   const videoRef = useRef(null);
-  const codeReader = useRef(null);
-  const [result, setResult] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [codeReader] = useState(() => new BrowserMultiFormatReader());
 
-  const iniciar = async () => {
-    codeReader.current = new BrowserMultiFormatReader();
-    setResult("");
-    setIsScanning(true);
+  const iniciarLeitura = async () => {
+    const video = videoRef.current;
+    video.style.display = "block";
 
     try {
-      const devices = await codeReader.current.listVideoInputDevices();
-      const id = devices[0]?.deviceId;
+      const devices = await codeReader.listVideoInputDevices();
 
-      if (!id) {
-        alert("Nenhuma câmera encontrada.");
-        return;
-      }
+      const backCamera = devices.find((device) =>
+        /back|trás|environment/i.test(device.label)
+      );
 
-      codeReader.current.decodeFromVideoDevice(
-        id,
-        videoRef.current,
+      const selectedDeviceId = backCamera
+        ? backCamera.deviceId
+        : devices[0]?.deviceId;
+
+      setScanning(true);
+
+      codeReader.decodeFromVideoDevice(
+        selectedDeviceId,
+        video,
         (result, err) => {
-          if (result) {
-            setResult(result.getText());
+          if (result && scanning) {
+            setCodigo("Código lido: " + result.getText());
+            pararLeitura(); // Parar automaticamente
           }
 
           if (err && err.name !== "NotFoundException") {
-            console.error("Erro na leitura:", err);
+            console.error("Erro ao ler código:", err);
           }
         }
       );
-    } catch (error) {}
+    } catch (error) {
+      console.error("Erro ao acessar câmera:", error);
+    }
+  };
+
+  const pararLeitura = () => {
+    codeReader.reset();
+    setScanning(false);
+    if (videoRef.current) {
+      videoRef.current.style.display = "none";
+    }
   };
 
   return (
