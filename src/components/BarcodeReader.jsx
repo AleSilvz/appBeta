@@ -46,8 +46,8 @@ function BarcodeReader() {
   };
 
   const pararLeitura = () => {
-    codeReaderRef.current.reset();
     codeReaderRef.current = null;
+    setScanning(false); // libera o botão iniciar
   };
 
   useEffect(() => {
