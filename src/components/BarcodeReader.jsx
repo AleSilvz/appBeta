@@ -29,8 +29,8 @@ function BarcodeReader() {
         video,
         (result, err) => {
           if (result && scanning) {
-            setCodigo("Código lido: " + result.getText());
-            pararLeitura(); // Parar automaticamente
+            setCodigo(result.getText());
+            pararLeitura();
           }
 
           if (err && err.name !== "NotFoundException") {
