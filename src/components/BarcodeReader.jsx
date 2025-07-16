@@ -1,14 +1,23 @@
-import { BrowserMultiFormatReader } from "@zxing/library";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function BarcodeReader() {
   const videoRef = useRef(null);
+  const [codeReader, setCodeReader] = useState(null);
   const [scanning, setScanning] = useState(false);
-  const [codigo, setCodigo] = useState("");
-  const [codeReader] = useState(() => new BrowserMultiFormatReader());
+  const [codigo, setCodigo] = useState("Código lido: nenhum");
+
+  useEffect(() => {
+    // A biblioteca deve estar disponível via CDN (window.ZXing)
+    if (window.ZXing) {
+      setCodeReader(new window.ZXing.BrowserMultiFormatReader());
+    }
+  }, []);
 
   const iniciarLeitura = async () => {
     const video = videoRef.current;
+
+    if (!codeReader) return;
+
     video.style.display = "block";
 
     try {
@@ -29,8 +38,11 @@ function BarcodeReader() {
         video,
         (result, err) => {
           if (result && scanning) {
-            setCodigo(result.getText());
-            pararLeitura();
+            setCodigo("Código lido: " + result.getText());
+
+            codeReader.reset();
+            setScanning(false);
+            video.style.display = "none";
           }
 
           if (err && err.name !== "NotFoundException") {
@@ -39,45 +51,48 @@ function BarcodeReader() {
         }
       );
     } catch (error) {
-      console.error("Erro ao acessar câmera:", error);
+      console.error("Erro ao acessar câmera: ", error);
     }
   };
 
   const pararLeitura = () => {
-    codeReader.reset();
-    setScanning(false);
-    if (videoRef.current) {
-      videoRef.current.style.display = "none";
+    if (codeReader) {
+      codeReader.reset();
+      setScanning(false);
+      if (videoRef.current) {
+        videoRef.current.style.display = "none";
+      }
     }
   };
 
   return (
     <div style={{ textAlign: "center" }}>
-      <h2>Leitor de Código de Barras</h2>
+      <h2>Escaneie um Código de Barras</h2>
+
+      <button onClick={iniciarLeitura} disabled={scanning}>
+        📷 Iniciar Leitura
+      </button>
+      <button onClick={pararLeitura} disabled={!scanning}>
+        🛑 Parar Leitura
+      </button>
+
+      <br />
+      <br />
 
       <video
         ref={videoRef}
+        width="320"
+        height="100"
         style={{
-          width: "100%",
-          maxWidth: "400px",
-          display: "none",
           border: "1px solid black",
+          display: "none",
+          transform: "rotate(90deg)",
         }}
         muted
         playsInline
       />
 
-      <div style={{ margin: "10px" }}>
-        <button onClick={iniciarLeitura} disabled={scanning}>
-          Iniciar
-        </button>
-        <button onClick={pararLeitura} disabled={!scanning}>
-          Parar
-        </button>
-      </div>
-
-      <p id="codigo">{codigo || "Nenhum código lido ainda"}</p>
-      <p id="codigo">{codigo}</p>
+      <p>{codigo}</p>
     </div>
   );
 }
