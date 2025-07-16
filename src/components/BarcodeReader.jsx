@@ -28,7 +28,8 @@ function BarcodeReader() {
       (result, err) => {
         if (result) {
           setCodigo("Código lido: " + result.getText());
-          pararLeitura(); // Parar automaticamente após ler
+          setScanning(false);
+          pararLeitura();
         }
 
         if (err && err.name !== "NotFoundException") {
@@ -43,10 +44,8 @@ function BarcodeReader() {
       codeReaderRef.current.reset();
       codeReaderRef.current = null;
     }
-    setScanning(false);
   };
 
-  // Encerra leitura ao desmontar o componente
   useEffect(() => {
     return () => pararLeitura();
   }, []);
