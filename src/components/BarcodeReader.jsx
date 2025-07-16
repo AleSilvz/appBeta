@@ -52,15 +52,31 @@ function BarcodeReader() {
   };
 
   return (
-    <div>
+    <div style={{ textAlign: "center" }}>
       <h2>Leitor de Código de Barras</h2>
-      <video ref={videoRef} style={{ width: "100%", maxWidth: 400 }} />
 
-      <button onClick={iniciar}>Iniciar Leitura</button>
+      <video
+        ref={videoRef}
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          display: "none",
+          border: "1px solid black",
+        }}
+        muted
+        playsInline
+      />
 
-      <p>
-        <strong>Resultado:</strong>
-      </p>
+      <div style={{ margin: "10px" }}>
+        <button onClick={iniciarLeitura} disabled={scanning}>
+          Iniciar
+        </button>
+        <button onClick={pararLeitura} disabled={!scanning}>
+          Parar
+        </button>
+      </div>
+
+      <p id="codigo">{codigo || "Nenhum código lido ainda"}</p>
     </div>
   );
 }
