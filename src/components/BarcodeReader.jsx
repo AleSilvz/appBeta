@@ -7,6 +7,12 @@ function BarcodeReader() {
   const [codigo, setCodigo] = useState("Nenhum código lido ainda");
   const [scanning, setScanning] = useState(false);
 
+  const [list, setList] = useState([{ name: "ale" }]);
+
+  const existe = list.some((e) => e.name === "ale");
+
+  console.log(existe);
+
   const iniciarLeitura = async () => {
     if (!videoRef.current) return;
 
@@ -40,10 +46,8 @@ function BarcodeReader() {
   };
 
   const pararLeitura = () => {
-    if (codeReaderRef.current) {
-      codeReaderRef.current.reset();
-      codeReaderRef.current = null;
-    }
+    codeReaderRef.current.reset();
+    codeReaderRef.current = null;
   };
 
   useEffect(() => {
