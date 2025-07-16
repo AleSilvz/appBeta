@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import {
+  BrowserMultiFormatReader,
+  listVideoInputDevices,
+} from "@zxing/browser";
 
 function BarcodeReader() {
   const videoRef = useRef(null);
@@ -16,7 +19,7 @@ function BarcodeReader() {
     codeReaderRef.current = codeReader;
 
     try {
-      const videoInputDevices = await codeReader.listVideoInputDevices();
+      const videoInputDevices = await listVideoInputDevices();
 
       if (videoInputDevices.length === 0) {
         setResultado("Nenhuma câmera encontrada.");
