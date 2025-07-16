@@ -14,7 +14,7 @@ function BarcodeReader() {
 
     try {
       const devices = await codeReader.current.listVideoInputDevices();
-      const id = devices[0]?.devicesId;
+      const id = devices[0]?.deviceId;
 
       if (!id) {
         alert("Nenhuma câmera encontrada.");
@@ -27,7 +27,6 @@ function BarcodeReader() {
         (result, err) => {
           if (result) {
             setResult(result.getText());
-            stopScanner();
           }
 
           if (err && err.name !== "NotFoundException") {
