@@ -1,98 +1,83 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 function BarcodeReader() {
   const videoRef = useRef(null);
-  const [codeReader, setCodeReader] = useState(null);
+  const codeReaderRef = useRef(null);
+  const [codigo, setCodigo] = useState("Nenhum código lido ainda");
   const [scanning, setScanning] = useState(false);
-  const [codigo, setCodigo] = useState("Código lido: nenhum");
-
-  useEffect(() => {
-    // A biblioteca deve estar disponível via CDN (window.ZXing)
-    if (window.ZXing) {
-      setCodeReader(new window.ZXing.BrowserMultiFormatReader());
-    }
-  }, []);
 
   const iniciarLeitura = async () => {
-    const video = videoRef.current;
+    if (!videoRef.current) return;
 
-    if (!codeReader) return;
+    const devices = await BrowserMultiFormatReader.listVideoInputDevices();
 
-    video.style.display = "block";
+    const backCamera = devices.find((device) =>
+      /back|trás|environment/i.test(device.label)
+    );
 
-    try {
-      const devices = await codeReader.listVideoInputDevices();
+    const selectedDeviceId = backCamera?.deviceId || devices[0]?.deviceId;
 
-      const backCamera = devices.find((device) =>
-        /back|trás|environment/i.test(device.label)
-      );
+    codeReaderRef.current = new BrowserMultiFormatReader();
 
-      const selectedDeviceId = backCamera
-        ? backCamera.deviceId
-        : devices[0]?.deviceId;
+    setScanning(true);
 
-      setScanning(true);
-
-      codeReader.decodeFromVideoDevice(
-        selectedDeviceId,
-        video,
-        (result, err) => {
-          if (result && scanning) {
-            setCodigo("Código lido: " + result.getText());
-
-            codeReader.reset();
-            setScanning(false);
-            video.style.display = "none";
-          }
-
-          if (err && err.name !== "NotFoundException") {
-            console.error("Erro ao ler código:", err);
-          }
+    codeReaderRef.current.decodeFromVideoDevice(
+      selectedDeviceId,
+      videoRef.current,
+      (result, err) => {
+        if (result) {
+          setCodigo("Código lido: " + result.getText());
+          pararLeitura(); // Parar automaticamente após ler
         }
-      );
-    } catch (error) {
-      console.error("Erro ao acessar câmera: ", error);
-    }
+
+        if (err && err.name !== "NotFoundException") {
+          console.error("Erro ao ler código:", err);
+        }
+      }
+    );
   };
 
   const pararLeitura = () => {
-    if (codeReader) {
-      codeReader.reset();
-      setScanning(false);
-      if (videoRef.current) {
-        videoRef.current.style.display = "none";
-      }
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
     }
+    setScanning(false);
   };
+
+  // Encerra leitura ao desmontar o componente
+  useEffect(() => {
+    return () => pararLeitura();
+  }, []);
 
   return (
     <div style={{ textAlign: "center" }}>
-      <h2>Escaneie um Código de Barras</h2>
-
-      <button onClick={iniciarLeitura} disabled={scanning}>
-        📷 Iniciar Leitura
-      </button>
-      <button onClick={pararLeitura} disabled={!scanning}>
-        🛑 Parar Leitura
-      </button>
-
-      <br />
-      <br />
+      <h2>Leitor de Código (QR / Barras)</h2>
 
       <video
         ref={videoRef}
-        width="320"
-        height="100"
         style={{
+          width: "100%",
+          maxWidth: "400px",
           border: "1px solid black",
-          display: "none",
-          transform: "rotate(90deg)",
+          marginBottom: "10px",
         }}
         muted
+        autoPlay
         playsInline
       />
 
       <p>{codigo}</p>
+
+      <div>
+        <button onClick={iniciarLeitura} disabled={scanning}>
+          📷 Iniciar Leitura
+        </button>
+        <button onClick={pararLeitura} disabled={!scanning}>
+          🛑 Parar
+        </button>
+      </div>
     </div>
   );
 }
