@@ -1,82 +1,52 @@
+import { BrowserMultiFormatReader } from "@zxing/library";
 import { useRef, useState } from "react";
-import {
-  BrowserMultiFormatReader,
-  listVideoInputDevices,
-} from "@zxing/browser";
 
 function BarcodeReader() {
   const videoRef = useRef(null);
-  const codeReaderRef = useRef(null);
-  const [resultado, setResultado] = useState("Nenhum código lido ainda.");
-  const [isReading, setIsReading] = useState(false);
+  const codeReader = useRef(null);
+  const [result, setResult] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
 
-  const iniciarLeitura = async () => {
-    if (isReading) return;
-
-    setResultado("Iniciando leitura...");
-    setIsReading(true);
-    const codeReader = new BrowserMultiFormatReader();
-    codeReaderRef.current = codeReader;
+  const iniciar = async () => {
+    codeReader.current = new BrowserMultiFormatReader();
+    setResult("");
+    setIsScanning(true);
 
     try {
-      const videoInputDevices = await listVideoInputDevices();
+      const devices = await codeReader.current.listVideoInputDevices();
+      const id = devices[0]?.devicesId;
 
-      if (videoInputDevices.length === 0) {
-        setResultado("Nenhuma câmera encontrada.");
-        setIsReading(false);
+      if (!id) {
+        alert("Nenhuma câmera encontrada.");
         return;
       }
 
-      const selectedDeviceId = videoInputDevices[0].deviceId;
-
-      codeReader.decodeFromVideoDevice(
-        selectedDeviceId,
+      codeReader.current.decodeFromVideoDevice(
+        id,
         videoRef.current,
-        (result, err, controls) => {
+        (result, err) => {
           if (result) {
-            setResultado(`Código lido: ${result.getText()}`);
-            controls.stop(); // Para automaticamente
-            setIsReading(false);
+            setResult(result.getText());
+            stopScanner();
           }
 
-          if (err && !(err.name === "NotFoundException")) {
-            console.error("Erro de leitura:", err);
+          if (err && err.name !== "NotFoundException") {
+            console.error("Erro na leitura:", err);
           }
         }
       );
-    } catch (error) {
-      console.error("Erro ao iniciar leitura:", error);
-      setResultado("Erro ao acessar a câmera.");
-      setIsReading(false);
-    }
-  };
-
-  const pararLeitura = () => {
-    if (codeReaderRef.current) {
-      codeReaderRef.current.reset();
-      setIsReading(false);
-      setResultado("Leitura parada manualmente.");
-    }
+    } catch (error) {}
   };
 
   return (
     <div>
       <h2>Leitor de Código de Barras</h2>
       <video ref={videoRef} style={{ width: "100%", maxWidth: 400 }} />
-      <div style={{ marginTop: "10px" }}>
-        <button onClick={iniciarLeitura} disabled={isReading}>
-          Iniciar Leitura
-        </button>
-        <button
-          onClick={pararLeitura}
-          disabled={!isReading}
-          style={{ marginLeft: "10px" }}
-        >
-          Parar Leitura
-        </button>
-      </div>
+
+      <button onClick={iniciar}>Iniciar Leitura</button>
+
       <p>
-        <strong>Resultado:</strong> {resultado}
+        <strong>Resultado:</strong>
       </p>
     </div>
   );
